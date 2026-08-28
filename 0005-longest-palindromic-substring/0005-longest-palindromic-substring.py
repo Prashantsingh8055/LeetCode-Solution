@@ -7,24 +7,39 @@ class Solution(object):
         if not s or len(s) == 1:
             return s
 
-        def expand_around_center(left, right):
-            while left >= 0 and right < len(s) and s[left] == s[right]:
-                left -= 1
-                right += 1
-            # Return the valid palindrome slice indices
-            return left + 1, right - 1
+        # Transform string to handle odd and even length palindromes uniformly
+        # e.g., "aba" -> "^#a#b#a#$"
+        T = "^#" + "#".join(s) + "#$"
+        n = len(T)
+        P = [0] * n
+        C = 0  # Center of the current rightmost palindrome
+        R = 0  # Right boundary of the current rightmost palindrome
 
-        start, end = 0, 0
+        for i in range(1, n - 1):
+            i_mirror = 2 * C - i  # Mirror of i with respect to C
 
-        for i in range(len(s)):
-            # Odd-length palindromes (single character center, e.g., "aba")
-            l1, r1 = expand_around_center(i, i)
-            if (r1 - l1) > (end - start):
-                start, end = l1, r1
+            if R > i:
+                P[i] = min(R - i, P[i_mirror])
+            else:
+                P[i] = 0
 
-            # Even-length palindromes (two character center, e.g., "abba")
-            l2, r2 = expand_around_center(i, i + 1)
-            if (r2 - l2) > (end - start):
-                start, end = l2, r2
+            # Expand around center i
+            while T[i + 1 + P[i]] == T[i - 1 - P[i]]:
+                P[i] += 1
 
-        return s[start:end + 1]
+            # Update center and right boundary
+            if i + P[i] > R:
+                C = i
+                R = i + P[i]
+
+        # Find the maximum radius and its center
+        max_len = 0
+        center_index = 0
+        for i in range(1, n - 1):
+            if P[i] > max_len:
+                max_len = P[i]
+                center_index = i
+
+        # Extract the original substring
+        start = (center_index - max_len) // 2
+        return s[start:start + max_len]
